@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, CheckCircle, Target, TrendingUp } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DailyProgress {
   date: string;
@@ -20,6 +21,7 @@ interface DailyProgress {
 }
 
 export default function ProgressTracker() {
+  const { user } = useAuth();
   const [progress, setProgress] = useState<DailyProgress[]>([]);
   const [todayProgress, setTodayProgress] = useState<DailyProgress>({
     date: new Date().toISOString().split("T")[0],
@@ -30,24 +32,33 @@ export default function ProgressTracker() {
   });
 
   useEffect(() => {
-    const savedProgress = localStorage.getItem("ccna-progress");
+    if (!user) return;
+
+    const savedProgress = localStorage.getItem(`ccna-progress-${user.id}`);
     if (savedProgress) {
       setProgress(JSON.parse(savedProgress));
     }
 
-    const savedTodayProgress = localStorage.getItem("ccna-today-progress");
+    const savedTodayProgress = localStorage.getItem(
+      `ccna-today-progress-${user.id}`,
+    );
     if (savedTodayProgress) {
       setTodayProgress(JSON.parse(savedTodayProgress));
     }
-  }, []);
+  }, [user]);
 
   const updateProgress = (field: keyof DailyProgress, increment: number) => {
+    if (!user) return;
+
     const updated = {
       ...todayProgress,
       [field]: todayProgress[field] + increment,
     };
     setTodayProgress(updated);
-    localStorage.setItem("ccna-today-progress", JSON.stringify(updated));
+    localStorage.setItem(
+      `ccna-today-progress-${user.id}`,
+      JSON.stringify(updated),
+    );
   };
 
   const calculateStreak = () => {

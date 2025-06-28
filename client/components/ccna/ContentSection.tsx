@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Book, Plus, Clock, User, Tag } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ContentItem {
   id: string;
@@ -50,6 +51,7 @@ const CCNA_CATEGORIES = [
 ];
 
 export default function ContentSection() {
+  const { user } = useAuth();
   const [contents, setContents] = useState<ContentItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -97,7 +99,12 @@ export default function ContentSection() {
   }, []);
 
   const saveContent = () => {
-    if (!newContent.title || !newContent.content || !newContent.category) {
+    if (
+      !newContent.title ||
+      !newContent.content ||
+      !newContent.category ||
+      !user
+    ) {
       return;
     }
 
@@ -107,7 +114,7 @@ export default function ContentSection() {
       content: newContent.content,
       category: newContent.category,
       difficulty: newContent.difficulty,
-      author: "Student",
+      author: user.fullName,
       createdAt: new Date().toISOString(),
       tags: newContent.tags
         .split(",")

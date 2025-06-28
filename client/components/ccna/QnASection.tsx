@@ -37,6 +37,7 @@ import {
   Clock,
   MessageCircle,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Question {
   id: string;
@@ -67,6 +68,7 @@ const CCNA_CATEGORIES = [
 ];
 
 export default function QnASection() {
+  const { user } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -85,7 +87,9 @@ export default function QnASection() {
 
   useEffect(() => {
     const savedQuestions = localStorage.getItem("ccna-questions");
-    const savedAnswers = localStorage.getItem("ccna-user-answers");
+    if (!user) return;
+
+    const savedAnswers = localStorage.getItem(`ccna-user-answers-${user.id}`);
 
     if (savedQuestions) {
       setQuestions(JSON.parse(savedQuestions));
@@ -147,7 +151,8 @@ export default function QnASection() {
     if (
       !newQuestion.question ||
       !newQuestion.category ||
-      newQuestion.options.some((opt) => !opt.trim())
+      newQuestion.options.some((opt) => !opt.trim()) ||
+      !user
     ) {
       return;
     }
@@ -160,7 +165,7 @@ export default function QnASection() {
       explanation: newQuestion.explanation,
       category: newQuestion.category,
       difficulty: newQuestion.difficulty,
-      author: "Student",
+      author: user.fullName,
       createdAt: new Date().toISOString(),
     };
 
@@ -181,7 +186,7 @@ export default function QnASection() {
 
   const submitAnswer = (questionId: string, selectedAnswer: number) => {
     const question = questions.find((q) => q.id === questionId);
-    if (!question) return;
+    if (!question || !user) return;
 
     const isCorrect = selectedAnswer === question.correctAnswer;
     const userAnswer: UserAnswer = {
@@ -196,7 +201,10 @@ export default function QnASection() {
       userAnswer,
     ];
     setUserAnswers(updatedAnswers);
-    localStorage.setItem("ccna-user-answers", JSON.stringify(updatedAnswers));
+    localStorage.setItem(
+      `ccna-user-answers-${user.id}`,
+      JSON.stringify(updatedAnswers),
+    );
   };
 
   const filteredQuestions =
