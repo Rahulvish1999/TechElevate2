@@ -40,8 +40,27 @@ import {
   Upload,
   Download,
   Eye,
+  Trash2,
+  MoreVertical,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ContentItem {
   id: string;
@@ -151,6 +170,8 @@ export default function ContentSection() {
   const [contents, setContents] = useState<ContentItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [contentToDelete, setContentToDelete] = useState<string | null>(null);
   const [newContent, setNewContent] = useState({
     title: "",
     content: "",
@@ -290,6 +311,30 @@ export default function ContentSection() {
     } catch (error) {
       alert("Error uploading file. Please try again.");
     }
+  };
+
+  const handleDeleteContent = (contentId: string) => {
+    setContentToDelete(contentId);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteContent = () => {
+    if (!contentToDelete) return;
+
+    const updatedContents = contents.filter(
+      (content) => content.id !== contentToDelete,
+    );
+    setContents(updatedContents);
+    localStorage.setItem("ccna-contents", JSON.stringify(updatedContents));
+
+    setContentToDelete(null);
+    setDeleteConfirmOpen(false);
+  };
+
+  const canDeleteContent = (content: ContentItem) => {
+    if (!user) return false;
+    // Users can delete their own content, faculty can delete any content
+    return user.role === "faculty" || content.author === user.fullName;
   };
 
   const filteredContents =
@@ -604,7 +649,7 @@ export default function ContentSection() {
               <Card key={content.id}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div className="flex-1">
                       <CardTitle className="text-lg">{content.title}</CardTitle>
                       <CardDescription className="flex items-center gap-4 mt-2">
                         <span className="flex items-center gap-1">
@@ -617,26 +662,53 @@ export default function ContentSection() {
                         </span>
                       </CardDescription>
                     </div>
-                    <div className="flex gap-2">
-                      <Badge variant="outline">{content.category}</Badge>
-                      <Badge className={getDifficultyColor(content.difficulty)}>
-                        {content.difficulty}
-                      </Badge>
-                      <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        {(() => {
-                          const Icon = getContentIcon(
-                            content.contentType || "text",
-                          );
-                          return <Icon className="h-3 w-3" />;
-                        })()}
-                        {(content.contentType || "text")
-                          .charAt(0)
-                          .toUpperCase() +
-                          (content.contentType || "text").slice(1)}
-                      </Badge>
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-2">
+                        <Badge variant="outline">{content.category}</Badge>
+                        <Badge
+                          className={getDifficultyColor(content.difficulty)}
+                        >
+                          {content.difficulty}
+                        </Badge>
+                        <Badge
+                          variant="secondary"
+                          className="flex items-center gap-1"
+                        >
+                          {(() => {
+                            const Icon = getContentIcon(
+                              content.contentType || "text",
+                            );
+                            return <Icon className="h-3 w-3" />;
+                          })()}
+                          {(content.contentType || "text")
+                            .charAt(0)
+                            .toUpperCase() +
+                            (content.contentType || "text").slice(1)}
+                        </Badge>
+                      </div>
+                      {canDeleteContent(content) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteContent(content.id)}
+                              className="text-red-600 focus:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Content
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
@@ -757,6 +829,36 @@ export default function ContentSection() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Content</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this content? This action cannot
+              be undone and will permanently remove the content from the
+              platform.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setContentToDelete(null);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteContent}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
