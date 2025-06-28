@@ -27,20 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Book,
-  Plus,
-  Clock,
-  User,
-  Tag,
-  FileText,
-  Image,
-  Link,
-  Video,
-  Upload,
-  Download,
-  Eye,
-} from "lucide-react";
+import { Book, Plus, Clock, User, Tag, FileText, Image, Link, Video, Upload, Download, Eye } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ContentItem {
@@ -68,42 +55,12 @@ const CCNA_CATEGORIES = [
 ];
 
 const CONTENT_TYPES = [
-  {
-    value: "text",
-    label: "Text Content",
-    icon: FileText,
-    description: "Written notes and explanations",
-  },
-  {
-    value: "pdf",
-    label: "PDF Document",
-    icon: FileText,
-    description: "Upload PDF files",
-  },
-  {
-    value: "word",
-    label: "Word Document",
-    icon: FileText,
-    description: "Upload Word documents",
-  },
-  {
-    value: "image",
-    label: "Image/Diagram",
-    icon: Image,
-    description: "Upload images and network diagrams",
-  },
-  {
-    value: "link",
-    label: "External Link",
-    icon: Link,
-    description: "Link to external resources",
-  },
-  {
-    value: "video",
-    label: "Video",
-    icon: Video,
-    description: "Upload video tutorials",
-  },
+  { value: "text", label: "Text Content", icon: FileText, description: "Written notes and explanations" },
+  { value: "pdf", label: "PDF Document", icon: FileText, description: "Upload PDF files" },
+  { value: "word", label: "Word Document", icon: FileText, description: "Upload Word documents" },
+  { value: "image", label: "Image/Diagram", icon: Image, description: "Upload images and network diagrams" },
+  { value: "link", label: "External Link", icon: Link, description: "Link to external resources" },
+  { value: "video", label: "Video", icon: Video, description: "Upload video tutorials" },
 ];
 
 const handleFileUpload = (file: File): Promise<string> => {
@@ -197,8 +154,7 @@ export default function ContentSection() {
         {
           id: "3",
           title: "Cisco Documentation",
-          content:
-            "https://www.cisco.com/c/en/us/support/docs/ip/routing-information-protocol-rip/13769-5.html",
+          content: "https://www.cisco.com/c/en/us/support/docs/ip/routing-information-protocol-rip/13769-5.html",
           contentType: "link",
           category: "Network Fundamentals",
           difficulty: "Intermediate",
@@ -224,10 +180,7 @@ export default function ContentSection() {
     if (newContent.contentType === "link" && !newContent.content) {
       return;
     }
-    if (
-      ["pdf", "word", "image", "video"].includes(newContent.contentType) &&
-      !newContent.fileData
-    ) {
+    if (["pdf", "word", "image", "video"].includes(newContent.contentType) && !newContent.fileData) {
       return;
     }
 
@@ -267,9 +220,7 @@ export default function ContentSection() {
     setIsDialogOpen(false);
   };
 
-  const handleFileSelect = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -326,14 +277,14 @@ export default function ContentSection() {
               Add Content
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>Add New Learning Content</DialogTitle>
               <DialogDescription>
                 Share knowledge and resources with fellow CCNA students
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
               <div>
                 <Label htmlFor="title">Title</Label>
                 <Input
@@ -348,15 +299,15 @@ export default function ContentSection() {
 
               <div>
                 <Label>Content Type</Label>
-                <div className="grid grid-cols-2 gap-3 mt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                   {CONTENT_TYPES.map((type) => {
                     const Icon = type.icon;
                     return (
                       <div
                         key={type.value}
-                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        className={`p-2 border rounded-md cursor-pointer transition-all hover:shadow-sm ${
                           newContent.contentType === type.value
-                            ? "border-blue-500 bg-blue-50"
+                            ? "border-blue-500 bg-blue-50 shadow-sm"
                             : "border-gray-200 hover:border-gray-300"
                         }`}
                         onClick={() =>
@@ -366,19 +317,17 @@ export default function ContentSection() {
                             content: "",
                             fileData: "",
                             fileName: "",
-                            fileSize: 0,
+                            fileSize: 0
                           })
                         }
                       >
-                        <div className="flex items-center gap-2 mb-1">
-                          <Icon className="h-4 w-4" />
-                          <span className="font-medium text-sm">
-                            {type.label}
-                          </span>
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <span className="font-medium text-sm block">{type.label}</span>
+                            <p className="text-xs text-gray-500 truncate">{type.description}</p>
+                          </div>
                         </div>
-                        <p className="text-xs text-gray-500">
-                          {type.description}
-                        </p>
                       </div>
                     );
                   })}
@@ -386,34 +335,31 @@ export default function ContentSection() {
               </div>
 
               {/* File Upload for non-text content */}
-              {["pdf", "word", "image", "video"].includes(
-                newContent.contentType,
-              ) && (
-                <div>
+              {["pdf", "word", "image", "video"].includes(newContent.contentType) && (
+                <div className="space-y-2">
                   <Label htmlFor="fileUpload">Upload File</Label>
-                  <div className="mt-2">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-center w-full">
                       <label
                         htmlFor="fileUpload"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                        className={`flex flex-col items-center justify-center w-full border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors ${
+                          newContent.fileName ? "h-20" : "h-32"
+                        }`}
                       >
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Upload className="w-8 h-8 mb-4 text-gray-500" />
-                          <p className="mb-2 text-sm text-gray-500">
-                            <span className="font-semibold">
-                              Click to upload
-                            </span>{" "}
-                            or drag and drop
+                        <div className="flex flex-col items-center justify-center p-4">
+                          <Upload className="w-6 h-6 mb-2 text-gray-500" />
+                          <p className="mb-1 text-sm text-gray-500">
+                            <span className="font-semibold">Click to upload</span>
+                            {!newContent.fileName && " or drag and drop"}
                           </p>
-                          <p className="text-xs text-gray-500">
-                            {newContent.contentType === "image"
-                              ? "PNG, JPG, GIF up to 5MB"
-                              : newContent.contentType === "pdf"
-                                ? "PDF files up to 5MB"
-                                : newContent.contentType === "word"
-                                  ? "DOC, DOCX files up to 5MB"
-                                  : "Video files up to 5MB"}
-                          </p>
+                          {!newContent.fileName && (
+                            <p className="text-xs text-gray-500">
+                              {newContent.contentType === "image" ? "PNG, JPG, GIF up to 5MB" :
+                               newContent.contentType === "pdf" ? "PDF files up to 5MB" :
+                               newContent.contentType === "word" ? "DOC, DOCX files up to 5MB" :
+                               "Video files up to 5MB"}
+                            </p>
+                          )}
                         </div>
                         <Input
                           id="fileUpload"
@@ -421,28 +367,38 @@ export default function ContentSection() {
                           className="hidden"
                           onChange={handleFileSelect}
                           accept={
-                            newContent.contentType === "image"
-                              ? "image/*"
-                              : newContent.contentType === "pdf"
-                                ? ".pdf"
-                                : newContent.contentType === "word"
-                                  ? ".doc,.docx"
-                                  : newContent.contentType === "video"
-                                    ? "video/*"
-                                    : "*/*"
+                            newContent.contentType === "image" ? "image/*" :
+                            newContent.contentType === "pdf" ? ".pdf" :
+                            newContent.contentType === "word" ? ".doc,.docx" :
+                            newContent.contentType === "video" ? "video/*" : "*/*"
                           }
                         />
                       </label>
                     </div>
                     {newContent.fileName && (
-                      <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">
-                            {newContent.fileName}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {formatFileSize(newContent.fileSize)}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-green-600" />
+                            <span className="text-sm font-medium text-green-800">{newContent.fileName}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-green-600">{formatFileSize(newContent.fileSize)}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setNewContent({
+                                ...newContent,
+                                fileData: "",
+                                fileName: "",
+                                fileSize: 0
+                              })}
+                              className="h-6 w-6 p-0 text-green-600 hover:text-green-800"
+                            >
+                              ✕
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -451,8 +407,7 @@ export default function ContentSection() {
               )}
 
               {/* Text content or link input */}
-              {(newContent.contentType === "text" ||
-                newContent.contentType === "link") && (
+              {(newContent.contentType === "text" || newContent.contentType === "link") && (
                 <div>
                   <Label htmlFor="content">
                     {newContent.contentType === "link" ? "URL" : "Content"}
@@ -462,10 +417,7 @@ export default function ContentSection() {
                       id="content"
                       value={newContent.content}
                       onChange={(e) =>
-                        setNewContent({
-                          ...newContent,
-                          content: e.target.value,
-                        })
+                        setNewContent({ ...newContent, content: e.target.value })
                       }
                       placeholder="https://example.com"
                       type="url"
@@ -475,14 +427,13 @@ export default function ContentSection() {
                       id="content"
                       value={newContent.content}
                       onChange={(e) =>
-                        setNewContent({
-                          ...newContent,
-                          content: e.target.value,
-                        })
+                        setNewContent({ ...newContent, content: e.target.value })
                       }
                       placeholder="Enter the learning content..."
-                      rows={8}
+                      rows={6}
+                      className="resize-none min-h-[120px] max-h-[200px]"
                     />
+                  )
                   )}
                 </div>
               )}
@@ -538,6 +489,8 @@ export default function ContentSection() {
                   placeholder="e.g., routing, switching, protocols"
                 />
               </div>
+            </div>
+            <div className="flex-shrink-0 pt-4 border-t">
               <Button onClick={saveContent} className="w-full">
                 Save Content
               </Button>
@@ -592,28 +545,19 @@ export default function ContentSection() {
                       <Badge className={getDifficultyColor(content.difficulty)}>
                         {content.difficulty}
                       </Badge>
-                      <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
+                      <Badge variant="secondary" className="flex items-center gap-1">
                         {(() => {
-                          const Icon = getContentIcon(
-                            content.contentType || "text",
-                          );
+                          const Icon = getContentIcon(content.contentType || "text");
                           return <Icon className="h-3 w-3" />;
                         })()}
-                        {(content.contentType || "text")
-                          .charAt(0)
-                          .toUpperCase() +
-                          (content.contentType || "text").slice(1)}
+                        {(content.contentType || "text").charAt(0).toUpperCase() + (content.contentType || "text").slice(1)}
                       </Badge>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="mb-4">
-                    {(!content.contentType ||
-                      content.contentType === "text") && (
+                    {(!content.contentType || content.contentType === "text") && (
                       <div className="whitespace-pre-wrap text-sm leading-relaxed">
                         {content.content}
                       </div>
@@ -640,9 +584,7 @@ export default function ContentSection() {
                           alt={content.title}
                           className="max-w-full h-auto rounded-lg border"
                         />
-                        <p className="text-xs text-gray-500">
-                          {content.fileName}
-                        </p>
+                        <p className="text-xs text-gray-500">{content.fileName}</p>
                       </div>
                     )}
 
@@ -655,56 +597,46 @@ export default function ContentSection() {
                           <source src={content.fileData} />
                           Your browser does not support the video tag.
                         </video>
-                        <p className="text-xs text-gray-500">
-                          {content.fileName}
-                        </p>
+                        <p className="text-xs text-gray-500">{content.fileName}</p>
                       </div>
                     )}
 
-                    {(content.contentType === "pdf" ||
-                      content.contentType === "word") &&
-                      content.fileData && (
-                        <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                          <FileText className="h-8 w-8 text-gray-600" />
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">
-                              {content.fileName}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {content.fileSize
-                                ? formatFileSize(content.fileSize)
-                                : "File"}
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
+                    {(content.contentType === "pdf" || content.contentType === "word") && content.fileData && (
+                      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                        <FileText className="h-8 w-8 text-gray-600" />
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{content.fileName}</p>
+                          <p className="text-xs text-gray-500">
+                            {content.fileSize ? formatFileSize(content.fileSize) : "File"}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = content.fileData!;
+                              link.download = content.fileName || 'download';
+                              link.click();
+                            }}
+                          >
+                            <Download className="h-3 w-3 mr-1" />
+                            Download
+                          </Button>
+                          {content.contentType === "pdf" && (
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => {
-                                const link = document.createElement("a");
-                                link.href = content.fileData!;
-                                link.download = content.fileName || "download";
-                                link.click();
-                              }}
+                              onClick={() => window.open(content.fileData, '_blank')}
                             >
-                              <Download className="h-3 w-3 mr-1" />
-                              Download
+                              <Eye className="h-3 w-3 mr-1" />
+                              View
                             </Button>
-                            {content.contentType === "pdf" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  window.open(content.fileData, "_blank")
-                                }
-                              >
-                                <Eye className="h-3 w-3 mr-1" />
-                                View
-                              </Button>
-                            )}
-                          </div>
+                          )}
                         </div>
-                      )}
+                      </div>
+                    )}
                   </div>
 
                   {content.tags.length > 0 && (
