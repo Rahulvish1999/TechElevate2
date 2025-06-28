@@ -597,18 +597,23 @@ export default function ContentSection() {
                         className="flex items-center gap-1"
                       >
                         {(() => {
-                          const Icon = getContentIcon(content.contentType);
+                          const Icon = getContentIcon(
+                            content.contentType || "text",
+                          );
                           return <Icon className="h-3 w-3" />;
                         })()}
-                        {content.contentType.charAt(0).toUpperCase() +
-                          content.contentType.slice(1)}
+                        {(content.contentType || "text")
+                          .charAt(0)
+                          .toUpperCase() +
+                          (content.contentType || "text").slice(1)}
                       </Badge>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="mb-4">
-                    {content.contentType === "text" && (
+                    {(!content.contentType ||
+                      content.contentType === "text") && (
                       <div className="whitespace-pre-wrap text-sm leading-relaxed">
                         {content.content}
                       </div>
