@@ -27,13 +27,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Book, Plus, Clock, User, Tag } from "lucide-react";
+import {
+  Book,
+  Plus,
+  Clock,
+  User,
+  Tag,
+  FileText,
+  Image,
+  Link,
+  Video,
+  Upload,
+  Download,
+  Eye,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ContentItem {
   id: string;
   title: string;
   content: string;
+  contentType: "text" | "pdf" | "word" | "image" | "diagram" | "link" | "video";
+  fileData?: string; // Base64 encoded file data
+  fileName?: string;
+  fileSize?: number;
   category: string;
   difficulty: "Beginner" | "Intermediate" | "Advanced";
   author: string;
@@ -50,6 +67,85 @@ const CCNA_CATEGORIES = [
   "Automation and Programmability",
 ];
 
+const CONTENT_TYPES = [
+  {
+    value: "text",
+    label: "Text Content",
+    icon: FileText,
+    description: "Written notes and explanations",
+  },
+  {
+    value: "pdf",
+    label: "PDF Document",
+    icon: FileText,
+    description: "Upload PDF files",
+  },
+  {
+    value: "word",
+    label: "Word Document",
+    icon: FileText,
+    description: "Upload Word documents",
+  },
+  {
+    value: "image",
+    label: "Image/Diagram",
+    icon: Image,
+    description: "Upload images and network diagrams",
+  },
+  {
+    value: "link",
+    label: "External Link",
+    icon: Link,
+    description: "Link to external resources",
+  },
+  {
+    value: "video",
+    label: "Video",
+    icon: Video,
+    description: "Upload video tutorials",
+  },
+];
+
+const handleFileUpload = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (reader.result) {
+        resolve(reader.result as string);
+      } else {
+        reject(new Error("Failed to read file"));
+      }
+    };
+    reader.onerror = () => reject(new Error("Error reading file"));
+    reader.readAsDataURL(file);
+  });
+};
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
+
+const getContentIcon = (contentType: string) => {
+  switch (contentType) {
+    case "pdf":
+    case "word":
+      return FileText;
+    case "image":
+    case "diagram":
+      return Image;
+    case "link":
+      return Link;
+    case "video":
+      return Video;
+    default:
+      return FileText;
+  }
+};
+
 export default function ContentSection() {
   const { user } = useAuth();
   const [contents, setContents] = useState<ContentItem[]>([]);
@@ -58,6 +154,10 @@ export default function ContentSection() {
   const [newContent, setNewContent] = useState({
     title: "",
     content: "",
+    contentType: "text" as const,
+    fileData: "",
+    fileName: "",
+    fileSize: 0,
     category: "",
     difficulty: "Beginner" as const,
     tags: "",
@@ -75,6 +175,7 @@ export default function ContentSection() {
           title: "OSI Model Overview",
           content:
             "The OSI (Open Systems Interconnection) model is a conceptual framework that describes the functions of a networking system. It consists of 7 layers:\n\n1. Physical Layer - Deals with physical connections\n2. Data Link Layer - Handles error detection and correction\n3. Network Layer - Manages routing and logical addressing\n4. Transport Layer - Ensures reliable data delivery\n5. Session Layer - Manages sessions between applications\n6. Presentation Layer - Handles data formatting and encryption\n7. Application Layer - Provides network services to applications",
+          contentType: "text",
           category: "Network Fundamentals",
           difficulty: "Beginner",
           author: "TechElevate Admin",
@@ -86,11 +187,24 @@ export default function ContentSection() {
           title: "TCP vs UDP",
           content:
             "TCP (Transmission Control Protocol) and UDP (User Datagram Protocol) are two core protocols of the Internet Protocol Suite:\n\nTCP:\n- Connection-oriented\n- Reliable delivery\n- Error checking and correction\n- Flow control\n- Slower but more reliable\n\nUDP:\n- Connectionless\n- Fast transmission\n- No error checking\n- No flow control\n- Used for time-sensitive applications",
+          contentType: "text",
           category: "Network Fundamentals",
           difficulty: "Intermediate",
           author: "TechElevate Admin",
           createdAt: new Date().toISOString(),
           tags: ["TCP", "UDP", "Protocols"],
+        },
+        {
+          id: "3",
+          title: "Cisco Documentation",
+          content:
+            "https://www.cisco.com/c/en/us/support/docs/ip/routing-information-protocol-rip/13769-5.html",
+          contentType: "link",
+          category: "Network Fundamentals",
+          difficulty: "Intermediate",
+          author: "TechElevate Admin",
+          createdAt: new Date().toISOString(),
+          tags: ["Cisco", "Documentation", "Reference"],
         },
       ];
       setContents(sampleContents);
@@ -99,11 +213,20 @@ export default function ContentSection() {
   }, []);
 
   const saveContent = () => {
+    if (!newContent.title || !newContent.category || !user) {
+      return;
+    }
+
+    // Validate based on content type
+    if (newContent.contentType === "text" && !newContent.content) {
+      return;
+    }
+    if (newContent.contentType === "link" && !newContent.content) {
+      return;
+    }
     if (
-      !newContent.title ||
-      !newContent.content ||
-      !newContent.category ||
-      !user
+      ["pdf", "word", "image", "video"].includes(newContent.contentType) &&
+      !newContent.fileData
     ) {
       return;
     }
@@ -112,6 +235,10 @@ export default function ContentSection() {
       id: Date.now().toString(),
       title: newContent.title,
       content: newContent.content,
+      contentType: newContent.contentType as any,
+      fileData: newContent.fileData,
+      fileName: newContent.fileName,
+      fileSize: newContent.fileSize,
       category: newContent.category,
       difficulty: newContent.difficulty,
       author: user.fullName,
@@ -129,11 +256,40 @@ export default function ContentSection() {
     setNewContent({
       title: "",
       content: "",
+      contentType: "text",
+      fileData: "",
+      fileName: "",
+      fileSize: 0,
       category: "",
       difficulty: "Beginner",
       tags: "",
     });
     setIsDialogOpen(false);
+  };
+
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (limit to 5MB for localStorage)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be less than 5MB");
+      return;
+    }
+
+    try {
+      const fileData = await handleFileUpload(file);
+      setNewContent({
+        ...newContent,
+        fileData,
+        fileName: file.name,
+        fileSize: file.size,
+      });
+    } catch (error) {
+      alert("Error uploading file. Please try again.");
+    }
   };
 
   const filteredContents =
@@ -189,6 +345,148 @@ export default function ContentSection() {
                   placeholder="Enter content title"
                 />
               </div>
+
+              <div>
+                <Label>Content Type</Label>
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  {CONTENT_TYPES.map((type) => {
+                    const Icon = type.icon;
+                    return (
+                      <div
+                        key={type.value}
+                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                          newContent.contentType === type.value
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                        onClick={() =>
+                          setNewContent({
+                            ...newContent,
+                            contentType: type.value as any,
+                            content: "",
+                            fileData: "",
+                            fileName: "",
+                            fileSize: 0,
+                          })
+                        }
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <Icon className="h-4 w-4" />
+                          <span className="font-medium text-sm">
+                            {type.label}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          {type.description}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* File Upload for non-text content */}
+              {["pdf", "word", "image", "video"].includes(
+                newContent.contentType,
+              ) && (
+                <div>
+                  <Label htmlFor="fileUpload">Upload File</Label>
+                  <div className="mt-2">
+                    <div className="flex items-center justify-center w-full">
+                      <label
+                        htmlFor="fileUpload"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">
+                              Click to upload
+                            </span>{" "}
+                            or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {newContent.contentType === "image"
+                              ? "PNG, JPG, GIF up to 5MB"
+                              : newContent.contentType === "pdf"
+                                ? "PDF files up to 5MB"
+                                : newContent.contentType === "word"
+                                  ? "DOC, DOCX files up to 5MB"
+                                  : "Video files up to 5MB"}
+                          </p>
+                        </div>
+                        <Input
+                          id="fileUpload"
+                          type="file"
+                          className="hidden"
+                          onChange={handleFileSelect}
+                          accept={
+                            newContent.contentType === "image"
+                              ? "image/*"
+                              : newContent.contentType === "pdf"
+                                ? ".pdf"
+                                : newContent.contentType === "word"
+                                  ? ".doc,.docx"
+                                  : newContent.contentType === "video"
+                                    ? "video/*"
+                                    : "*/*"
+                          }
+                        />
+                      </label>
+                    </div>
+                    {newContent.fileName && (
+                      <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">
+                            {newContent.fileName}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {formatFileSize(newContent.fileSize)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Text content or link input */}
+              {(newContent.contentType === "text" ||
+                newContent.contentType === "link") && (
+                <div>
+                  <Label htmlFor="content">
+                    {newContent.contentType === "link" ? "URL" : "Content"}
+                  </Label>
+                  {newContent.contentType === "link" ? (
+                    <Input
+                      id="content"
+                      value={newContent.content}
+                      onChange={(e) =>
+                        setNewContent({
+                          ...newContent,
+                          content: e.target.value,
+                        })
+                      }
+                      placeholder="https://example.com"
+                      type="url"
+                    />
+                  ) : (
+                    <Textarea
+                      id="content"
+                      value={newContent.content}
+                      onChange={(e) =>
+                        setNewContent({
+                          ...newContent,
+                          content: e.target.value,
+                        })
+                      }
+                      placeholder="Enter the learning content..."
+                      rows={8}
+                    />
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="category">Category</Label>
@@ -238,18 +536,6 @@ export default function ContentSection() {
                     setNewContent({ ...newContent, tags: e.target.value })
                   }
                   placeholder="e.g., routing, switching, protocols"
-                />
-              </div>
-              <div>
-                <Label htmlFor="content">Content</Label>
-                <Textarea
-                  id="content"
-                  value={newContent.content}
-                  onChange={(e) =>
-                    setNewContent({ ...newContent, content: e.target.value })
-                  }
-                  placeholder="Enter the learning content..."
-                  rows={8}
                 />
               </div>
               <Button onClick={saveContent} className="w-full">
@@ -306,13 +592,116 @@ export default function ContentSection() {
                       <Badge className={getDifficultyColor(content.difficulty)}>
                         {content.difficulty}
                       </Badge>
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
+                        {(() => {
+                          const Icon = getContentIcon(content.contentType);
+                          return <Icon className="h-3 w-3" />;
+                        })()}
+                        {content.contentType.charAt(0).toUpperCase() +
+                          content.contentType.slice(1)}
+                      </Badge>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed mb-4">
-                    {content.content}
+                  <div className="mb-4">
+                    {content.contentType === "text" && (
+                      <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                        {content.content}
+                      </div>
+                    )}
+
+                    {content.contentType === "link" && (
+                      <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                        <Link className="h-4 w-4 text-blue-600" />
+                        <a
+                          href={content.content}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-sm"
+                        >
+                          {content.content}
+                        </a>
+                      </div>
+                    )}
+
+                    {content.contentType === "image" && content.fileData && (
+                      <div className="space-y-2">
+                        <img
+                          src={content.fileData}
+                          alt={content.title}
+                          className="max-w-full h-auto rounded-lg border"
+                        />
+                        <p className="text-xs text-gray-500">
+                          {content.fileName}
+                        </p>
+                      </div>
+                    )}
+
+                    {content.contentType === "video" && content.fileData && (
+                      <div className="space-y-2">
+                        <video
+                          controls
+                          className="max-w-full h-auto rounded-lg border"
+                        >
+                          <source src={content.fileData} />
+                          Your browser does not support the video tag.
+                        </video>
+                        <p className="text-xs text-gray-500">
+                          {content.fileName}
+                        </p>
+                      </div>
+                    )}
+
+                    {(content.contentType === "pdf" ||
+                      content.contentType === "word") &&
+                      content.fileData && (
+                        <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                          <FileText className="h-8 w-8 text-gray-600" />
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">
+                              {content.fileName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {content.fileSize
+                                ? formatFileSize(content.fileSize)
+                                : "File"}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const link = document.createElement("a");
+                                link.href = content.fileData!;
+                                link.download = content.fileName || "download";
+                                link.click();
+                              }}
+                            >
+                              <Download className="h-3 w-3 mr-1" />
+                              Download
+                            </Button>
+                            {content.contentType === "pdf" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  window.open(content.fileData, "_blank")
+                                }
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                   </div>
+
                   {content.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {content.tags.map((tag) => (
