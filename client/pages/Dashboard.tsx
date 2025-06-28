@@ -1,4 +1,4 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -28,6 +28,9 @@ import { useNavigate } from "react-router-dom";
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [activeSection, setActiveSection] = useState<
+    "progress" | "content" | "questions"
+  >("progress");
 
   const handleLogout = () => {
     logout();
@@ -83,24 +86,24 @@ export default function Dashboard() {
           <FacultyDashboard />
         ) : (
           <>
-            {/* Welcome Cards for Students */}
+            {/* Navigation Cards for Students */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <Card className="text-center">
+              <Card
+                className={`text-center cursor-pointer transition-all hover:shadow-lg ${
+                  activeSection === "progress"
+                    ? "ring-2 ring-blue-500 bg-blue-50"
+                    : ""
+                }`}
+                onClick={() => setActiveSection("progress")}
+              >
                 <CardHeader>
-                  <BookOpen className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                  <CardTitle className="text-lg">Learn</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>
-                    Access comprehensive CCNA study materials and resources
-                    organized by exam topics
-                  </CardDescription>
-                </CardContent>
-              </Card>
-
-              <Card className="text-center">
-                <CardHeader>
-                  <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                  <TrendingUp
+                    className={`h-8 w-8 mx-auto mb-2 ${
+                      activeSection === "progress"
+                        ? "text-blue-600"
+                        : "text-green-600"
+                    }`}
+                  />
                   <CardTitle className="text-lg">Track Progress</CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -111,10 +114,49 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="text-center">
+              <Card
+                className={`text-center cursor-pointer transition-all hover:shadow-lg ${
+                  activeSection === "content"
+                    ? "ring-2 ring-blue-500 bg-blue-50"
+                    : ""
+                }`}
+                onClick={() => setActiveSection("content")}
+              >
                 <CardHeader>
-                  <HelpCircle className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                  <CardTitle className="text-lg">Practice</CardTitle>
+                  <BookOpen
+                    className={`h-8 w-8 mx-auto mb-2 ${
+                      activeSection === "content"
+                        ? "text-blue-600"
+                        : "text-blue-600"
+                    }`}
+                  />
+                  <CardTitle className="text-lg">Learn CCNA</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>
+                    Access comprehensive CCNA study materials and resources
+                    organized by exam topics
+                  </CardDescription>
+                </CardContent>
+              </Card>
+
+              <Card
+                className={`text-center cursor-pointer transition-all hover:shadow-lg ${
+                  activeSection === "questions"
+                    ? "ring-2 ring-blue-500 bg-blue-50"
+                    : ""
+                }`}
+                onClick={() => setActiveSection("questions")}
+              >
+                <CardHeader>
+                  <HelpCircle
+                    className={`h-8 w-8 mx-auto mb-2 ${
+                      activeSection === "questions"
+                        ? "text-blue-600"
+                        : "text-purple-600"
+                    }`}
+                  />
+                  <CardTitle className="text-lg">Q&A Practice</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
@@ -125,86 +167,60 @@ export default function Dashboard() {
               </Card>
             </div>
 
-            {/* Student Learning Tabs */}
-            <Tabs defaultValue="progress" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger
-                  value="progress"
-                  className="flex items-center gap-2"
-                >
-                  <TrendingUp className="h-4 w-4" />
-                  Progress Tracker
-                </TabsTrigger>
-                <TabsTrigger
-                  value="content"
-                  className="flex items-center gap-2"
-                >
-                  <BookOpen className="h-4 w-4" />
-                  Learn CCNA
-                </TabsTrigger>
-                <TabsTrigger
-                  value="questions"
-                  className="flex items-center gap-2"
-                >
-                  <HelpCircle className="h-4 w-4" />
-                  Q&A Practice
-                </TabsTrigger>
-              </TabsList>
+            {/* Dynamic Content Based on Selected Section */}
+            {activeSection === "progress" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Your Learning Progress
+                  </CardTitle>
+                  <CardDescription>
+                    Track your daily study activities and monitor your progress
+                    towards CCNA certification
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ProgressTracker />
+                </CardContent>
+              </Card>
+            )}
 
-              <TabsContent value="progress">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5" />
-                      Your Learning Progress
-                    </CardTitle>
-                    <CardDescription>
-                      Track your daily study activities and monitor your
-                      progress towards CCNA certification
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ProgressTracker />
-                  </CardContent>
-                </Card>
-              </TabsContent>
+            {activeSection === "content" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    CCNA Learning Materials
+                  </CardTitle>
+                  <CardDescription>
+                    Browse and contribute study materials organized by CCNA exam
+                    objectives
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ContentSection />
+                </CardContent>
+              </Card>
+            )}
 
-              <TabsContent value="content">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BookOpen className="h-5 w-5" />
-                      CCNA Learning Materials
-                    </CardTitle>
-                    <CardDescription>
-                      Browse and contribute study materials organized by CCNA
-                      exam objectives
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ContentSection />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="questions">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <HelpCircle className="h-5 w-5" />
-                      Practice Questions & Answers
-                    </CardTitle>
-                    <CardDescription>
-                      Test your knowledge with practice questions and review
-                      explanations
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <QnASection />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+            {activeSection === "questions" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <HelpCircle className="h-5 w-5" />
+                    Practice Questions & Answers
+                  </CardTitle>
+                  <CardDescription>
+                    Test your knowledge with practice questions and review
+                    explanations
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <QnASection />
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
 
